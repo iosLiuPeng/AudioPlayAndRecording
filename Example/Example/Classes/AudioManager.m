@@ -321,21 +321,31 @@ static AudioManager *s_audioManager = nil;
                 case AVPlayerItemStatusUnknown: // 未知状态，此时不能播放
                     self.status = AudioPlayStatus_Unknown;
                     [self resetProgress];
-//                    NSLog(@"==KVO：未知状态，此时不能播放");
+                    NSLog(@"==KVO：未知状态，此时不能播放");
                     break;
                 case AVPlayerItemStatusReadyToPlay: // 准备完毕，可以播放
-                    [self continuePlaying];
-                    
-                    if ([_delegate respondsToSelector:@selector(totalDurationUpdated:)]) {
-                        NSTimeInterval total = CMTimeGetSeconds(_player.currentItem.duration);
-                        [_delegate totalDurationUpdated:total];
+                    // 退出程序一段时间，重新进来会此激活，为此状态
+                    switch (_status) {
+                        case AudioPlayStatus_Preparation:
+                        case AudioPlayStatus_Playing:
+                        {
+                            [self continuePlaying];
+                            
+                            if ([_delegate respondsToSelector:@selector(totalDurationUpdated:)]) {
+                                NSTimeInterval total = CMTimeGetSeconds(_player.currentItem.duration);
+                                [_delegate totalDurationUpdated:total];
+                            }
+                        }
+                            break;
+                        default:
+                            break;
                     }
-//                    NSLog(@"==KVO：准备完毕，可以播放");
+                    NSLog(@"==KVO：准备完毕，可以播放");
                     break;
                 case AVPlayerItemStatusFailed:  // 加载失败，网络或者服务器出现问题
                     self.status = AudioPlayStatus_Failed;
                     [self resetProgress];
-//                    NSLog(@"==KVO：加载失败，网络或者服务器出现问题");
+                    NSLog(@"==KVO：加载失败，网络或者服务器出现问题");
                     break;
                 default:
                     break;
