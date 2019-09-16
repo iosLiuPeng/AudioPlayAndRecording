@@ -125,9 +125,21 @@ static AudioManager *s_audioManager = nil;
 {
     switch (_status) {
         case AudioPlayStatus_Pause:
-        case AudioPlayStatus_Failed:
         case AudioPlayStatus_End:
             [self continuePlaying];
+            break;
+        case AudioPlayStatus_Failed:        // 失败后重试
+        {
+            [self stop];
+            
+            AVPlayerItem *item = [[AVPlayerItem alloc] initWithURL:_url];
+            [self addItemObserver:item];
+            
+            [_player replaceCurrentItemWithPlayerItem:item];
+            
+            // 准备播放
+            self.status = AudioPlayStatus_Preparation;
+        }
             break;
         default:
             break;
@@ -184,7 +196,6 @@ static AudioManager *s_audioManager = nil;
 {
     switch (_status) {
         case AudioPlayStatus_Preparation:   // 正常从头开始
-        case AudioPlayStatus_Failed:        // 失败后重试
         case AudioPlayStatus_Pause:         // 继续播放
         case AudioPlayStatus_Buffering:     // 缓冲好了自动播放
             self.status = AudioPlayStatus_Playing;
